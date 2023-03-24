@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"user/handler"
 	pb "user/proto"
 
@@ -11,14 +12,19 @@ import (
 func main() {
 	// Create service
 	srv := service.New(
-		service.Name("user"),
+		service.Name("go.micro.service.user"),
+		service.Version("latest"),
 	)
 
-	// Register handler
-	pb.RegisterUserHandler(srv.Server(), handler.New())
+	srv.Init()
 
-	// Run service
-	if err := srv.Run(); err != nil {
-		logger.Fatal(err)
+	db, err := gorm.Open("mysql", "root:123456@/micro?charset=utf8&parseTime=True&loc=Local")
+	if err != nil {
+		fmt.Println(err)
 	}
+	defer db.Close()
+
+	db.SingularTable(true)
+
+	srv.handler(new(handler.User))
 }
